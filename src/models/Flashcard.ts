@@ -41,6 +41,10 @@ const FlashcardSchema = new mongoose.Schema({
         type: String,
         default: 'Padrão',
     },
+    isCustomDeck: {
+        type: Boolean,
+        default: false,
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
