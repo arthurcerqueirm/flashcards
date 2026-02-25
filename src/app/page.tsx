@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Loader2, Brain, Trophy } from 'lucide-react';
+import { Search, Loader2, Brain, Trophy, TrendingUp } from 'lucide-react';
 import StatsHeader from '@/components/StatsHeader';
 import Flashcard from '@/components/Flashcard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ export default function Home() {
   const [reviewStats, setReviewStats] = useState({ count: 0, xpGained: 0 });
   const [cardCount, setCardCount] = useState(10);
   const [upcomingSchedule, setUpcomingSchedule] = useState<any[]>([]);
+  const [deckName, setDeckName] = useState('Padrão');
 
   // Stats state
   const [xp, setXp] = useState(0);
@@ -226,6 +227,29 @@ export default function Home() {
     }
   };
 
+  const startAdvanceReview = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/flashcards/review?includeUpcoming=true');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        if (data.length > 0) {
+          setReviewCards(data);
+          setIsReviewMode(true);
+          setCurrentIndex(0);
+          setShowFinished(false);
+          setFlashcards([]);
+        } else {
+          alert('Você não tem palavras aprendidas para antecipar!');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching upcoming reviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className={`min-h-screen flex flex-col transition-colors duration-1000 ${isReviewMode ? 'bg-[#120b2e]' : 'bg-background'} relative overflow-hidden`}>
       {/* Decorative Background Elements */}
@@ -285,6 +309,8 @@ export default function Home() {
                   </button>
                 </div>
                 <Flashcard
+                  key={(isReviewMode ? reviewCards : flashcards)[currentIndex]?._id || (isReviewMode ? reviewCards : flashcards)[currentIndex]?.word}
+                  id={(isReviewMode ? reviewCards : flashcards)[currentIndex]?._id}
                   {...(isReviewMode ? reviewCards : flashcards)[currentIndex]}
                   onKnown={handleKnown}
                   onUnknown={nextCard}
@@ -387,6 +413,17 @@ export default function Home() {
                         className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
                       />
                     </div>
+
+                    <div className="flex items-center gap-2 flex-1 md:max-w-[200px]">
+                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] whitespace-nowrap">Deck:</span>
+                      <input
+                        type="text"
+                        value={deckName}
+                        onChange={(e) => setDeckName(e.target.value)}
+                        placeholder="Nome do Deck"
+                        className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs font-bold focus:border-primary/50 outline-none text-white placeholder:text-muted-foreground/30"
+                      />
+                    </div>
                     <div className="flex gap-2">
                       {['Travel', 'Food', 'Work'].map((t) => (
                         <button
@@ -434,21 +471,37 @@ export default function Home() {
                       ? 'bg-primary/10 border-primary/20 cursor-pointer shadow-2xl shadow-primary/5 hover:bg-primary/20'
                       : 'bg-card/40 border-white/10 opacity-60'
                       }`}
-                    onClick={reviewCards.length > 0 ? startReview : undefined}
                   >
-                    <div>
+                    <div onClick={reviewCards.length > 0 ? startReview : undefined} className="flex-1">
                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">Revisão Pendente</p>
                       <h3 className="text-6xl font-black text-white leading-none tracking-tighter">{reviewCards.length}</h3>
                     </div>
                     {reviewCards.length > 0 ? (
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-primary tracking-widest">Revisar Agora</span>
-                        <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                          <Brain size={20} />
+                      <div className="mt-4 flex flex-col gap-3">
+                        <div onClick={startReview} className="flex items-center justify-between group/btn cursor-pointer">
+                          <span className="text-xs font-black uppercase text-primary tracking-widest group-hover/btn:underline">Revisar Agora</span>
+                          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <Brain size={20} />
+                          </div>
                         </div>
+                        <button
+                          onClick={startAdvanceReview}
+                          className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-widest hover:text-white transition-colors"
+                        >
+                          + Antecipar Próximas
+                        </button>
                       </div>
                     ) : (
-                      <p className="text-xs font-black text-green-500 uppercase tracking-widest mt-6">Tudo em dia!</p>
+                      <div className="mt-4 flex flex-col gap-3">
+                        <p className="text-xs font-black text-green-500 uppercase tracking-widest">Tudo em dia!</p>
+                        <button
+                          onClick={startAdvanceReview}
+                          className="flex items-center gap-2 text-[10px] font-black uppercase text-primary tracking-widest hover:scale-105 transition-transform w-fit"
+                        >
+                          <TrendingUp size={14} />
+                          Antecipar Ciclo
+                        </button>
+                      </div>
                     )}
                   </motion.div>
                 </div>

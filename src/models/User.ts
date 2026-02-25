@@ -34,6 +34,10 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 1,
     },
+    achievements: {
+        type: [String],
+        default: [],
+    },
 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

@@ -43,7 +43,7 @@ export default function LearnedWordsPage() {
     );
 
     const categories = words.reduce((acc: any, word) => {
-        const cat = word.category || 'Geral';
+        const cat = word.deckName || word.category || 'Geral';
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(word);
         return acc;
@@ -81,6 +81,8 @@ export default function LearnedWordsPage() {
                             className="w-full max-w-md"
                         >
                             <Flashcard
+                                key={practiceWords[practiceIndex]._id || practiceWords[practiceIndex].word}
+                                id={practiceWords[practiceIndex]._id}
                                 {...practiceWords[practiceIndex]}
                                 onKnown={() => {
                                     if (practiceIndex < practiceWords.length - 1) setPracticeIndex(p => p + 1);
@@ -143,14 +145,14 @@ export default function LearnedWordsPage() {
                             }`}
                     >
                         <LayoutGrid size={20} />
-                        Categorias
+                        Decks
                     </button>
                 </div>
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6" />
-                        <p className="text-xl font-bold">Organizando seu conhecimento...</p>
+                        <p className="text-xl font-bold">Organizando seus decks...</p>
                     </div>
                 ) : (
                     <AnimatePresence mode="wait">

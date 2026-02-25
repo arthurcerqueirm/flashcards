@@ -53,6 +53,7 @@ export async function GET() {
             streak: user.streak,
             level: user.level,
             totalLearned: user.totalWordsLearned,
+            achievements: user.achievements || [],
         });
     } catch (error) {
         return NextResponse.json({ error: 'Erro ao buscar estatísticas' }, { status: 500 });
@@ -70,14 +71,34 @@ export async function POST(req: Request) {
         const { xp, streak, level, totalLearned } = await req.json();
 
         await dbConnect();
-        const user = await User.findOneAndUpdate(
-            { email: session.user?.email },
-            { xp, streak, level, totalWordsLearned: totalLearned },
-            { new: true }
-        );
+        const user = await User.findOne({ email: session.user?.email });
+        if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+
+        // Update basic stats
+        user.xp = xp;
+        user.streak = streak;
+        user.level = level;
+        user.totalWordsLearned = totalLearned;
+
+        // Check for achievements
+        const achievements = user.achievements || [];
+        const newAchievements = [...achievements];
+
+        const checkAndAdd = (id: string) => {
+            if (!newAchievements.includes(id)) newAchievements.push(id);
+        };
+
+        if (totalLearned >= 1) checkAndAdd('first_word');
+        if (streak >= 3) checkAndAdd('streak_3');
+        if (totalLearned >= 50) checkAndAdd('vocab_50');
+        if (level >= 5) checkAndAdd('level_5');
+
+        user.achievements = newAchievements;
+        await user.save();
 
         return NextResponse.json({ success: true, user });
     } catch (error) {
+        console.error('Update stats error:', error);
         return NextResponse.json({ error: 'Erro ao atualizar estatísticas' }, { status: 500 });
     }
 }

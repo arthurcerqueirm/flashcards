@@ -4,19 +4,27 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import Flashcard from '@/models/Flashcard';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
+        const { searchParams } = new URL(req.url);
+        const includeUpcoming = searchParams.get('includeUpcoming') === 'true';
+
         await dbConnect();
         const today = new Date();
 
-        const reviewCards = await Flashcard.find({
+        const query: any = {
             userId: session.user?.id,
-            learned: true,
-            nextReviewDate: { $lte: today }
-        }).sort({ nextReviewDate: 1 });
+            learned: true
+        };
+
+        if (!includeUpcoming) {
+            query.nextReviewDate = { $lte: today };
+        }
+
+        const reviewCards = await Flashcard.find(query).sort({ nextReviewDate: 1 });
 
         return NextResponse.json(reviewCards);
     } catch (error) {

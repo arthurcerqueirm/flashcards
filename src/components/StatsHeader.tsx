@@ -55,6 +55,25 @@ export default function StatsHeader({ xp, streak, level }: StatsHeaderProps) {
                     </Link>
                 </div>
 
+                {/* Desktop Navigation */}
+                <div className="hidden lg:flex items-center gap-1 bg-card/40 backdrop-blur-xl border border-white/10 p-2 rounded-[20px] shadow-2xl shadow-primary/5 pointer-events-auto">
+                    <Link
+                        href="/learned"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl transition-all group"
+                    >
+                        <BookMarked size={18} className="text-muted-foreground group-hover:text-accent transition-colors" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-white transition-colors">Vocabulário</span>
+                    </Link>
+                    <div className="w-px h-4 bg-white/10 mx-1" />
+                    <Link
+                        href="/dashboard"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl transition-all group"
+                    >
+                        <Trophy size={18} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-white transition-colors">Progresso</span>
+                    </Link>
+                </div>
+
                 {/* Stats & Actions */}
                 <div className="flex items-center gap-2 md:gap-3 bg-card/40 backdrop-blur-xl border border-white/10 p-2 md:p-2.5 rounded-2xl md:rounded-[24px] shadow-2xl shadow-primary/10">
                     <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">

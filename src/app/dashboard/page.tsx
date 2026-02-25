@@ -13,7 +13,7 @@ import {
     AreaChart,
     Area
 } from 'recharts';
-import { BookOpen, TrendingUp, Award, Calendar } from 'lucide-react';
+import { BookOpen, TrendingUp, Award, Calendar, Zap, Medal, Target, Flame, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 const mockData = [
@@ -31,7 +31,8 @@ export default function Dashboard() {
         xp: 0,
         streak: 0,
         level: 1,
-        totalLearned: 0
+        totalLearned: 0,
+        achievements: [] as string[]
     });
 
     useEffect(() => {
@@ -93,7 +94,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div className="bg-card border border-white/5 rounded-[40px] p-10 shadow-2xl">
+                <div className="bg-card border border-white/5 rounded-[40px] p-10 shadow-2xl mb-12">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h3 className="text-2xl font-bold mb-1">Progresso Semanal</h3>
@@ -143,6 +144,49 @@ export default function Dashboard() {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Achievements Section */}
+                <div className="mb-12">
+                    <h2 className="text-3xl font-black mb-8 flex items-center gap-3">
+                        <Award className="text-yellow-500" size={32} />
+                        Suas Conquistas
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { id: 'first_word', title: 'Primeira Palavra', desc: 'Aprendeu seu 1º card', icon: Zap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                            { id: 'streak_3', title: 'Foco Inicial', desc: '3 dias de sequência', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+                            { id: 'vocab_50', title: 'Vocabulário Ativo', desc: '50 palavras masterizadas', icon: Target, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                            { id: 'level_5', title: 'Veterano', desc: 'Chegou ao Nível 5', icon: Medal, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+                        ].map((medal) => {
+                            const isUnlocked = stats.achievements?.includes(medal.id);
+                            const Icon = medal.icon;
+                            return (
+                                <div
+                                    key={medal.id}
+                                    className={`relative p-6 rounded-[32px] border-2 transition-all overflow-hidden group ${isUnlocked
+                                        ? 'bg-card border-white/10 shadow-xl'
+                                        : 'bg-white/5 border-white/5 grayscale opacity-50'
+                                        }`}
+                                >
+                                    {isUnlocked && (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                                    )}
+                                    <div className={`w-14 h-14 ${medal.bg} ${medal.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                                        <Icon size={28} />
+                                    </div>
+                                    <h4 className="font-black text-white mb-1">{medal.title}</h4>
+                                    <p className="text-xs text-muted-foreground font-medium">{medal.desc}</p>
+
+                                    {!isUnlocked && (
+                                        <div className="absolute top-4 right-4 text-muted-foreground/30">
+                                            <Lock size={16} />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

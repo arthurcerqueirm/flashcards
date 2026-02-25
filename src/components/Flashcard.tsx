@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, RotateCcw } from 'lucide-react';
+import { Check, X, RotateCcw, Volume2, Pencil, Save } from 'lucide-react';
 
 interface FlashcardProps {
+    id?: string;
     word: string;
     translation: string;
     sentence: string;
@@ -15,22 +16,67 @@ interface FlashcardProps {
 }
 
 export default function Flashcard({
-    word,
-    translation,
-    sentence,
-    sentenceTranslation,
+    id,
+    word: initialWord,
+    translation: initialTranslation,
+    sentence: initialSentence,
+    sentenceTranslation: initialSentenceTranslation,
     onKnown,
     onUnknown,
     onSrsUpdate,
 }: FlashcardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const handleFlip = () => setIsFlipped(!isFlipped);
+    // Edit state
+    const [word, setWord] = useState(initialWord);
+    const [translation, setTranslation] = useState(initialTranslation);
+    const [sentence, setSentence] = useState(initialSentence);
+    const [sentenceTranslation, setSentenceTranslation] = useState(initialSentenceTranslation);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleFlip = () => {
+        if (!isEditing) setIsFlipped(!isFlipped);
+    };
+
+    const speak = (text: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+    };
+
+    const handleSave = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!id) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/flashcards/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cardId: id,
+                    word,
+                    translation,
+                    sentence,
+                    sentenceTranslation
+                })
+            });
+            if (res.ok) {
+                setIsEditing(false);
+            }
+        } catch (err) {
+            console.error('Error saving card:', err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="flex flex-col items-center gap-6 w-full max-w-md mx-auto">
             <div
-                className="relative w-full aspect-[3/4] cursor-pointer perspective-1000"
+                className={`relative w-full aspect-[3/4] ${!isEditing && 'cursor-pointer'} perspective-1000`}
                 onClick={handleFlip}
             >
                 <motion.div
@@ -42,23 +88,134 @@ export default function Flashcard({
                     {/* Front */}
                     <div className="absolute inset-0 w-full h-full backface-hidden bg-card border-2 border-primary/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
-                        <span className="text-sm font-medium text-primary uppercase tracking-widest mb-4">Palavra</span>
-                        <h2 className="text-4xl font-bold mb-2">{word}</h2>
-                        <p className="text-muted-foreground text-sm mt-4 animate-pulse">Clique para ver a tradução</p>
+
+                        <div className="absolute top-6 right-6 flex gap-2">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
+                                className={`p-3 rounded-xl transition-all active:scale-95 ${isEditing ? 'bg-red-500/10 text-red-500' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                            >
+                                {isEditing ? <X size={20} /> : <Pencil size={20} />}
+                            </button>
+                            {!isEditing && (
+                                <button
+                                    onClick={(e) => speak(word, e)}
+                                    className="p-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all active:scale-95"
+                                >
+                                    <Volume2 size={20} />
+                                </button>
+                            )}
+                        </div>
+
+                        {isEditing ? (
+                            <div className="w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+                                <div className="text-left w-full">
+                                    <label className="text-[10px] uppercase font-black text-primary tracking-widest ml-1">Palavra</label>
+                                    <input
+                                        value={word}
+                                        onChange={(e) => setWord(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg font-bold focus:border-primary/50 outline-none"
+                                    />
+                                </div>
+                                <div className="text-left w-full">
+                                    <label className="text-[10px] uppercase font-black text-primary tracking-widest ml-1">Tradução</label>
+                                    <input
+                                        value={translation}
+                                        onChange={(e) => setTranslation(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-lg font-bold focus:border-primary/50 outline-none"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="w-full py-4 bg-primary text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:bg-primary/80 transition-all disabled:opacity-50"
+                                >
+                                    <Save size={18} />
+                                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-sm font-medium text-primary uppercase tracking-widest mb-4">Palavra</span>
+                                <h2 className="text-4xl font-bold mb-2">{word}</h2>
+                                <p className="text-muted-foreground text-sm mt-4 animate-pulse">Clique para ver a tradução</p>
+                            </>
+                        )}
                     </div>
 
                     {/* Back */}
                     <div className="absolute inset-0 w-full h-full backface-hidden bg-card border-2 border-accent/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl rotate-y-180 overflow-hidden"
                         style={{ transform: 'rotateY(180deg)' }}>
                         <div className="absolute top-0 left-0 w-full h-1 bg-accent/20" />
-                        <span className="text-sm font-medium text-accent uppercase tracking-widest mb-2">Tradução</span>
-                        <h3 className="text-3xl font-bold mb-6 text-accent">{translation}</h3>
 
-                        <div className="w-full h-px bg-border my-4" />
+                        <div className="absolute top-6 right-6 flex flex-col gap-2">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
+                                className={`p-2.5 rounded-xl transition-all active:scale-95 ${isEditing ? 'bg-red-500/10 text-red-500' : 'bg-accent/10 text-accent hover:bg-accent/20'}`}
+                            >
+                                {isEditing ? <X size={18} /> : <Pencil size={18} />}
+                            </button>
+                            {!isEditing && (
+                                <button
+                                    onClick={(e) => speak(word, e)}
+                                    className="p-2.5 bg-accent/10 hover:bg-accent/20 text-accent rounded-xl transition-all active:scale-95"
+                                    title="Pronunciar palavra"
+                                >
+                                    <Volume2 size={18} />
+                                </button>
+                            )}
+                        </div>
 
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Exemplo</span>
-                        <p className="text-lg italic mb-2">"{sentence}"</p>
-                        <p className="text-sm text-muted-foreground">({sentenceTranslation})</p>
+                        {isEditing ? (
+                            <div className="w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+                                <div className="text-left w-full">
+                                    <label className="text-[10px] uppercase font-black text-accent tracking-widest ml-1">Frase de Exemplo</label>
+                                    <textarea
+                                        value={sentence}
+                                        onChange={(e) => setSentence(e.target.value)}
+                                        rows={2}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium focus:border-accent/50 outline-none resize-none"
+                                    />
+                                </div>
+                                <div className="text-left w-full">
+                                    <label className="text-[10px] uppercase font-black text-accent tracking-widest ml-1">Tradução da Frase</label>
+                                    <textarea
+                                        value={sentenceTranslation}
+                                        onChange={(e) => setSentenceTranslation(e.target.value)}
+                                        rows={2}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium focus:border-accent/50 outline-none resize-none"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="w-full py-4 bg-accent text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-accent/20 flex items-center justify-center gap-2 hover:bg-accent/80 transition-all disabled:opacity-50"
+                                >
+                                    <Save size={18} />
+                                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-sm font-medium text-accent uppercase tracking-widest mb-2">Tradução</span>
+                                <h3 className="text-3xl font-bold mb-6 text-accent">{translation}</h3>
+
+                                <div className="w-full h-px bg-border my-4" />
+
+                                <div className="flex flex-col items-center">
+                                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Exemplo</span>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <p className="text-lg italic">"{sentence}"</p>
+                                        <button
+                                            onClick={(e) => speak(sentence, e)}
+                                            className="p-1.5 hover:bg-white/5 text-muted-foreground hover:text-white rounded-lg transition-colors"
+                                        >
+                                            <Volume2 size={16} />
+                                        </button>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">({sentenceTranslation})</p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </motion.div>
             </div>
