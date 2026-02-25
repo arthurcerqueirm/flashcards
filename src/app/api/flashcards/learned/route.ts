@@ -29,10 +29,16 @@ export async function POST(req: Request) {
         const cardData = await req.json();
         await dbConnect();
 
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
         const newCard = await Flashcard.create({
             ...cardData,
             userId: session.user?.id,
-            learned: true
+            learned: true,
+            nextReviewDate: tomorrow,
+            interval: 1,
         });
 
         return NextResponse.json(newCard);

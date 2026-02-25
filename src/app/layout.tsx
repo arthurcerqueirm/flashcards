@@ -18,18 +18,23 @@ export const metadata: Metadata = {
   description: "Aprenda inglês com IA de forma divertida e eficiente.",
 };
 
+import BottomNav from "@/components/BottomNav";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <Providers>
-          {children}
+          <div className="flex-1 pb-24 lg:pb-0">
+            {children}
+          </div>
+          <BottomNav />
         </Providers>
       </body>
     </html>

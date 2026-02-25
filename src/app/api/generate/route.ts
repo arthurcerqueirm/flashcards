@@ -5,7 +5,7 @@ import Flashcard from '@/models/Flashcard';
 
 export async function POST(req: Request) {
   try {
-    const { theme, learnedWords = [] } = await req.json();
+    const { theme, learnedWords = [], limit = 5 } = await req.json();
 
     if (!theme) {
       return NextResponse.json({ error: 'Tema é obrigatório' }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     const prompt = `
       Você é um professor de inglês especializado para brasileiros.
-      Gere 5 flashcards para o tema: "${theme}".
+      Gere ${limit} flashcards para o tema: "${theme}".
       
       ${exclusionList}
       
@@ -26,15 +26,17 @@ export async function POST(req: Request) {
       2. "translation": A tradução da palavra para o português.
       3. "sentence": Uma frase de exemplo curta e útil em inglês usando a palavra.
       4. "sentenceTranslation": A tradução da frase de exemplo para o português.
+      5. "category": Uma categoria curta (ex: Viagem, Trabalho, Social, Saúde, Tecnologia, Geral) que melhor defina a palavra.
 
-      Retorne APENAS um array JSON válido com os 5 objetos, sem explicações ou Markdown formatado (apenas o texto JSON puro).
+      Retorne APENAS um array JSON válido com EXATAMENTE ${limit} objetos, sem explicações ou Markdown formatado.
       Exemplo de formato:
       [
         {
           "word": "Airport",
           "translation": "Aeroporto",
           "sentence": "I am at the airport.",
-          "sentenceTranslation": "Eu estou no aeroporto."
+          "sentenceTranslation": "Eu estou no aeroporto.",
+          "category": "Viagem"
         }
       ]
     `;

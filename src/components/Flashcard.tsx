@@ -11,6 +11,7 @@ interface FlashcardProps {
     sentenceTranslation: string;
     onKnown: () => void;
     onUnknown: () => void;
+    onSrsUpdate?: (rating: 'again' | 'hard' | 'good' | 'easy') => void;
 }
 
 export default function Flashcard({
@@ -20,6 +21,7 @@ export default function Flashcard({
     sentenceTranslation,
     onKnown,
     onUnknown,
+    onSrsUpdate,
 }: FlashcardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
 
@@ -61,21 +63,46 @@ export default function Flashcard({
                 </motion.div>
             </div>
 
-            <div className="flex gap-4 w-full">
-                <button
-                    onClick={(e) => { e.stopPropagation(); onUnknown(); setIsFlipped(false); }}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl border border-red-500/20 transition-all active:scale-95"
-                >
-                    <X size={20} />
-                    Não sei
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); onKnown(); setIsFlipped(false); }}
-                    className="flex-1 flex items-center justify-center gap-2 py-4 bg-accent/10 hover:bg-accent/20 text-accent font-bold rounded-2xl border border-accent/20 transition-all active:scale-95 shadow-lg shadow-accent/10"
-                >
-                    <Check size={20} />
-                    Já sei (+10 XP)
-                </button>
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-3 w-full justify-center px-2">
+                {onSrsUpdate ? (
+                    <div className="grid grid-cols-2 sm:flex gap-2 md:gap-3 w-full">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onSrsUpdate('again'); setIsFlipped(false); }}
+                            className="px-3 py-3 md:px-4 md:py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl border border-red-500/20 transition-all active:scale-95 text-sm md:text-base"
+                        >
+                            Errei
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onSrsUpdate('good'); setIsFlipped(false); }}
+                            className="px-3 py-3 md:px-4 md:py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-2xl border border-primary/20 transition-all active:scale-95 text-sm md:text-base"
+                        >
+                            Acertei
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onSrsUpdate('easy'); setIsFlipped(false); }}
+                            className="col-span-2 sm:col-span-1 px-3 py-3 md:px-4 md:py-3 bg-green-500/10 hover:bg-green-500/20 text-green-500 font-bold rounded-2xl border border-green-500/20 transition-all active:scale-95 shadow-lg shadow-green-500/10 text-sm md:text-base"
+                        >
+                            Fácil
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex gap-2 md:gap-3 w-full">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onUnknown(); setIsFlipped(false); }}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 md:py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl border border-red-500/20 transition-all active:scale-95 text-sm md:text-base"
+                        >
+                            <X size={18} className="md:w-5 md:h-5" />
+                            Não sei
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onKnown(); setIsFlipped(false); }}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 md:py-4 bg-accent/10 hover:bg-accent/20 text-accent font-bold rounded-2xl border border-accent/20 transition-all active:scale-95 shadow-lg shadow-accent/10 text-sm md:text-base"
+                        >
+                            <Check size={18} className="md:w-5 md:h-5" />
+                            Já sei!
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

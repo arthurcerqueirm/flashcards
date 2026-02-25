@@ -21,6 +21,22 @@ const FlashcardSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    nextReviewDate: {
+        type: Date,
+        default: Date.now,
+    },
+    interval: {
+        type: Number,
+        default: 0, // Days
+    },
+    easeFactor: {
+        type: Number,
+        default: 2.5,
+    },
+    category: {
+        type: String,
+        default: 'Geral',
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
