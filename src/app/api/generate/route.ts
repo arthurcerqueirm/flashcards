@@ -2,9 +2,44 @@ import { NextResponse } from 'next/server';
 import { model } from '@/lib/gemini';
 import dbConnect from '@/lib/mongodb';
 import Flashcard from '@/models/Flashcard';
+import User from '@/models/User';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+
+    await dbConnect();
+    const user = await User.findOne({ email: session.user?.email });
+    if (!user) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+
+    // Check usage limits for free users
+    if (!user.isPremium) {
+      const now = new Date();
+      const lastUsage = user.lastGenerationDate ? new Date(user.lastGenerationDate) : null;
+
+      const isNewDay = !lastUsage ||
+        now.getDate() !== lastUsage.getDate() ||
+        now.getMonth() !== lastUsage.getMonth() ||
+        now.getFullYear() !== lastUsage.getFullYear();
+
+      if (isNewDay) {
+        user.dailyGenerationCount = 0;
+        user.lastGenerationDate = now;
+      }
+
+      const FREE_LIMIT = 3;
+      if (user.dailyGenerationCount >= FREE_LIMIT) {
+        return NextResponse.json({
+          error: 'Limite diário atingido',
+          code: 'LIMIT_REACHED',
+          message: 'Você atingiu o limite de 3 gerações por dia no plano grátis. Faça o upgrade para o Pro para gerações ilimitadas!'
+        }, { status: 403 });
+      }
+    }
+
     const { theme, learnedWords = [], limit = 5 } = await req.json();
 
     if (!theme) {
@@ -50,10 +85,11 @@ export async function POST(req: Request) {
 
     const flashcardsData = JSON.parse(text);
 
-    await dbConnect();
-
-    // We can optionally save them as "pending" or just return them
-    // For now, let's just return them to the frontend
+    // Increment usage for free users
+    if (!user.isPremium) {
+      user.dailyGenerationCount += 1;
+      await user.save();
+    }
 
     return NextResponse.json(flashcardsData);
   } catch (error) {

@@ -13,6 +13,8 @@ interface FlashcardProps {
     onKnown: () => void;
     onUnknown: () => void;
     onSrsUpdate?: (rating: 'again' | 'hard' | 'good' | 'easy') => void;
+    interval?: number;
+    easeFactor?: number;
 }
 
 export default function Flashcard({
@@ -24,6 +26,8 @@ export default function Flashcard({
     onKnown,
     onUnknown,
     onSrsUpdate,
+    interval: currentInterval = 0,
+    easeFactor = 2.5,
 }: FlashcardProps) {
     const [isFlipped, setIsFlipped] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -204,7 +208,7 @@ export default function Flashcard({
                                 <div className="flex flex-col items-center">
                                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Exemplo</span>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <p className="text-lg italic">"{sentence}"</p>
+                                        <p className="text-lg italic">&quot;{sentence}&quot;</p>
                                         <button
                                             onClick={(e) => speak(sentence, e)}
                                             className="p-1.5 hover:bg-white/5 text-muted-foreground hover:text-white rounded-lg transition-colors"
@@ -225,21 +229,28 @@ export default function Flashcard({
                     <div className="grid grid-cols-2 sm:flex gap-2 md:gap-3 w-full">
                         <button
                             onClick={(e) => { e.stopPropagation(); onSrsUpdate('again'); setIsFlipped(false); }}
-                            className="px-3 py-3 md:px-4 md:py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl border border-red-500/20 transition-all active:scale-95 text-sm md:text-base"
+                            className="px-3 py-3 md:px-4 md:py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl border border-red-500/20 transition-all active:scale-95 text-sm md:text-base flex flex-col items-center justify-center"
                         >
-                            Errei
+                            <span>Errei</span>
+                            <span className="text-[10px] opacity-70 font-medium">1 dia</span>
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onSrsUpdate('good'); setIsFlipped(false); }}
-                            className="px-3 py-3 md:px-4 md:py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-2xl border border-primary/20 transition-all active:scale-95 text-sm md:text-base"
+                            className="px-3 py-3 md:px-4 md:py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-2xl border border-primary/20 transition-all active:scale-95 text-sm md:text-base flex flex-col items-center justify-center"
                         >
-                            Acertei
+                            <span>Acertei</span>
+                            <span className="text-[10px] opacity-70 font-medium">
+                                {currentInterval === 0 ? '1 dia' : `${Math.floor(currentInterval * easeFactor)} dias`}
+                            </span>
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onSrsUpdate('easy'); setIsFlipped(false); }}
-                            className="col-span-2 sm:col-span-1 px-3 py-3 md:px-4 md:py-3 bg-green-500/10 hover:bg-green-500/20 text-green-500 font-bold rounded-2xl border border-green-500/20 transition-all active:scale-95 shadow-lg shadow-green-500/10 text-sm md:text-base"
+                            className="col-span-2 sm:col-span-1 px-3 py-3 md:px-4 md:py-3 bg-green-500/10 hover:bg-green-500/20 text-green-500 font-bold rounded-2xl border border-green-500/20 transition-all active:scale-95 shadow-lg shadow-green-500/10 text-sm md:text-base flex flex-col items-center justify-center"
                         >
-                            Fácil
+                            <span>Fácil</span>
+                            <span className="text-[10px] opacity-70 font-medium">
+                                {currentInterval === 0 ? '4 dias' : `${Math.floor(currentInterval * easeFactor * 1.3)} dias`}
+                            </span>
                         </button>
                     </div>
                 ) : (

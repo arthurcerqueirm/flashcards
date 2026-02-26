@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, Flame, Star, LogOut, BookMarked, Settings, Brain } from 'lucide-react';
+import { Trophy, Flame, Star, LogOut, BookMarked, Settings, Brain, Crown } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
@@ -32,8 +32,8 @@ export default function StatsHeader({ xp, streak, level }: StatsHeaderProps) {
     }, []);
 
     return (
-        <div className="w-full fixed top-0 left-0 right-0 z-[100] p-4 md:p-6 pointer-events-none">
-            <div className="max-w-7xl mx-auto flex items-center justify-between pointer-events-auto">
+        <div className="w-full sticky top-0 bg-background/80 backdrop-blur-xl border-b border-white/10 z-[100] p-4 md:p-6 transition-all">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
                 {/* Brand & Progress */}
                 <div className="flex items-center gap-3 bg-card/40 backdrop-blur-xl border border-white/10 p-2 md:p-2.5 rounded-2xl md:rounded-[24px] shadow-2xl shadow-primary/10">
                     <Link href="/" className="flex items-center gap-3">
@@ -42,7 +42,10 @@ export default function StatsHeader({ xp, streak, level }: StatsHeaderProps) {
                         </div>
                         <div className="hidden sm:flex flex-col pr-4">
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Nível {level}</span>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{session?.user?.name || `Nível ${level}`}</span>
+                                {session?.user?.isPremium && (
+                                    <span className="text-[8px] bg-primary text-white px-1.5 py-0.5 rounded-md font-black">PRO</span>
+                                )}
                                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                             </div>
                             <div className="w-24 md:w-32 h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
@@ -57,6 +60,14 @@ export default function StatsHeader({ xp, streak, level }: StatsHeaderProps) {
 
                 {/* Desktop Navigation */}
                 <div className="hidden lg:flex items-center gap-1 bg-card/40 backdrop-blur-xl border border-white/10 p-2 rounded-[20px] shadow-2xl shadow-primary/5 pointer-events-auto">
+                    <Link
+                        href="/pricing"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-xl transition-all group"
+                    >
+                        <Crown size={18} className="text-primary animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary group-hover:text-white transition-colors">Seja Pro</span>
+                    </Link>
+                    <div className="w-px h-4 bg-white/10 mx-1" />
                     <Link
                         href="/learned"
                         className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 rounded-xl transition-all group"
@@ -103,9 +114,9 @@ export default function StatsHeader({ xp, streak, level }: StatsHeaderProps) {
                     <div className="h-8 w-px bg-white/10 hidden md:block" />
 
                     <div className="hidden md:flex items-center gap-2 pl-2">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all cursor-pointer">
+                        <Link href="/settings" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all cursor-pointer">
                             <Settings size={20} />
-                        </div>
+                        </Link>
                         <div
                             onClick={() => signOut()}
                             className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer"

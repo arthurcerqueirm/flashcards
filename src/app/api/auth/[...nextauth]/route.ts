@@ -35,6 +35,7 @@ export const authOptions = {
                     id: user._id.toString(),
                     email: user.email,
                     name: user.username,
+                    isPremium: user.isPremium || false,
                 };
             }
         })
@@ -44,6 +45,11 @@ export const authOptions = {
             if (token) {
                 session.user.id = token.id;
                 session.user.name = token.name;
+
+                // Fetch fresh premium status from database
+                await dbConnect();
+                const user = await User.findById(token.id);
+                session.user.isPremium = user?.isPremium || false;
             }
             return session;
         },
@@ -51,6 +57,7 @@ export const authOptions = {
             if (user) {
                 token.id = user.id;
                 token.name = user.name;
+                token.isPremium = user.isPremium;
             }
             return token;
         }

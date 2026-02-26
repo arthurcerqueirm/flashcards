@@ -16,15 +16,7 @@ import {
 import { BookOpen, TrendingUp, Award, Calendar, Zap, Medal, Target, Flame, Lock } from 'lucide-react';
 import Link from 'next/link';
 
-const mockData = [
-    { name: 'Seg', words: 12 },
-    { name: 'Ter', words: 18 },
-    { name: 'Qua', words: 15 },
-    { name: 'Qui', words: 25 },
-    { name: 'Sex', words: 30 },
-    { name: 'Sáb', words: 20 },
-    { name: 'Dom', words: 40 },
-];
+// Remove mockData constant
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
@@ -35,19 +27,34 @@ export default function Dashboard() {
         achievements: [] as string[]
     });
 
+    const [chartData, setChartData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dailyAvg, setDailyAvg] = useState(0);
+
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const res = await fetch('/api/user/stats');
-                const data = await res.json();
-                if (!data.error) {
-                    setStats(data);
+                // Fetch basic stats
+                const statsRes = await fetch('/api/user/stats');
+                const statsData = await statsRes.json();
+                if (!statsData.error) {
+                    setStats(statsData);
+                }
+
+                // Fetch aggregate dashboard data
+                const dashRes = await fetch('/api/user/dashboard-stats');
+                const dashData = await dashRes.json();
+                if (!dashData.error) {
+                    setChartData(dashData.weeklyProgress);
+                    setDailyAvg(dashData.dailyAverage);
                 }
             } catch (err) {
-                console.error('Error fetching dashboard stats:', err);
+                console.error('Error fetching dashboard data:', err);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchStats();
+        fetchDashboardData();
     }, []);
 
     return (
@@ -80,7 +87,7 @@ export default function Dashboard() {
                             <TrendingUp size={24} />
                         </div>
                         <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Média Diária</p>
-                        <h2 className="text-5xl font-black">22</h2>
+                        <h2 className="text-5xl font-black">{dailyAvg}</h2>
                         <p className="text-xs text-muted-foreground mt-2 font-medium">Novas palavras por dia</p>
                     </div>
 
@@ -104,46 +111,52 @@ export default function Dashboard() {
                     </div>
 
                     <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={mockData}>
-                                <defs>
-                                    <linearGradient id="colorWords" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }}
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#18181b',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '16px',
-                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
-                                    }}
-                                    itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="words"
-                                    stroke="var(--primary)"
-                                    strokeWidth={4}
-                                    fillOpacity={1}
-                                    fill="url(#colorWords)"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {loading ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-muted-foreground animate-pulse font-bold">Carregando dados reais...</span>
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData}>
+                                    <defs>
+                                        <linearGradient id="colorWords" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#71717a', fontSize: 12, fontWeight: 600 }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#18181b',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '16px',
+                                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                                        }}
+                                        itemStyle={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="words"
+                                        stroke="var(--primary)"
+                                        strokeWidth={4}
+                                        fillOpacity={1}
+                                        fill="url(#colorWords)"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 

@@ -112,10 +112,18 @@ export default function Home() {
         body: JSON.stringify({ theme, learnedWords, limit: cardCount }),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        if (data.code === 'LIMIT_REACHED') {
+          alert(data.message);
+          window.location.href = '/pricing';
+          return;
+        }
+        throw new Error(data.error);
+      }
       setFlashcards(data);
     } catch (err) {
-      alert('Erro ao gerar flashcards. Verifique sua chave da API Gemini.');
+      console.error('Generation error:', err);
+      alert('Erro ao gerar flashcards. Se você estiver no plano grátis, pode ter atingido o limite diário.');
     } finally {
       setLoading(false);
     }
@@ -258,7 +266,7 @@ export default function Home() {
 
       <StatsHeader xp={xp} streak={streak} level={level} />
 
-      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pt-24 md:pt-32 pb-24 md:pb-12 h-full flex flex-col">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 pt-8 md:pt-12 pb-24 md:pb-12 h-full flex flex-col">
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div
@@ -315,6 +323,8 @@ export default function Home() {
                   onKnown={handleKnown}
                   onUnknown={nextCard}
                   onSrsUpdate={handleSrsUpdate}
+                  interval={(isReviewMode ? reviewCards : flashcards)[currentIndex]?.interval}
+                  easeFactor={(isReviewMode ? reviewCards : flashcards)[currentIndex]?.easeFactor}
                 />
               </div>
             </motion.div>
